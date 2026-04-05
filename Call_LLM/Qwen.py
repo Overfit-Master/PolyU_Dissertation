@@ -9,7 +9,7 @@ from typing import List, Dict, Optional, Tuple, Union
 
 
 class QwenClient:
-    def __init__(self, key_name: str, conf_path: str = "api_key.conf"):
+    def __init__(self, key_name: str, conf_path: str = "./api_key.conf"):
         """
         :param key_name: api_key.conf 中配置的标识名
         :param conf_path: 配置文件的本地路径，默认为当前目录的 api_key.conf
@@ -94,3 +94,28 @@ class QwenClient:
         if return_usage:
             return content, (response.usage.model_dump() if response.usage else {})
         return content
+
+
+if __name__ == '__main__':
+    import asyncio
+
+    router_client = QwenClient(key_name="build_test")
+    worker_client_1 = QwenClient(key_name="build_test")
+
+
+    def test_sync():
+        prompt = "你是路由 Agent，请判断这个任务的复杂度。"
+        # 使用 router_client 调用
+        response = router_client.generate(prompt=prompt, model="qwen-turbo")
+        print("【Router 输出】:", response)
+
+
+    async def test_async():
+        task = "你是执行 Agent，请解决这个简单的数学题：1+1=?"
+        # 使用 worker_client_1 异步调用
+        response, usage = await worker_client_1.async_generate(prompt=task, model="qwen-turbo", return_usage=True)
+        print("【Worker 输出】:", response)
+        print("【Worker 消耗】:", usage)
+
+    test_sync()
+    asyncio.run(test_async())
