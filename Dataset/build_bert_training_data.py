@@ -82,11 +82,11 @@ def build_mixed_perception_dataset(
     print(f"数据已存为 HF 格式至: {output_dir}")
 
     # 方式B：顺便存一份 JSONL 格式，方便人工 review 数据
-    jsonl_path = f"{output_dir}_human_readable.jsonl"
-    with open(jsonl_path, "w", encoding="utf-8") as f:
-        for item in final_data_list:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-    print(f"人类可读的 JSONL 数据已保存至: {jsonl_path}")
+    # jsonl_path = f"{output_dir}/human_readable.jsonl"
+    # with open(jsonl_path, "w", encoding="utf-8") as f:
+    #     for item in final_data_list:
+    #         f.write(json.dumps(item, ensure_ascii=False) + "\n")
+    # print(f"人类可读的 JSONL 数据已保存至: {jsonl_path}")
 
     print(
         f"\n最终数据集总样本数: {len(final_dataset)} (Label 0: {len(data_0)}, Label 1: {len(data_1_gsm8k) + len(data_1_bbh)})")
