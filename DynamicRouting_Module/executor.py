@@ -1,5 +1,5 @@
 """
-Execution abstraction for routed plans.
+路由后执行层的抽象定义（用于把“路由决策”落实为具体执行）。
 """
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from .routing_types import ExecutionResult, ExecutionStatus, RoutingDecision, Ta
 
 class ParadigmExecutor(Protocol):
     def execute(self, profile: TaskProfile, decision: RoutingDecision) -> ExecutionResult:
-        """Execute one routed decision."""
+        """执行一次路由决策，并返回执行结果。"""
 
 
 class MockParadigmExecutor:
     """
-    Local mock executor for architecture validation.
-    Replace this with real LLM/tool execution in production.
+    本地模拟执行器：用于验证路由/质量门等架构逻辑。
+    若要接入真实大模型或工具调用，请在实验代码中替换为真实的执行器实现。
     """
 
     def __init__(self, seed: int = 42) -> None:

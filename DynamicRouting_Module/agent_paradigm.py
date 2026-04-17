@@ -1,5 +1,5 @@
 """
-Paradigm registry for dynamic routing.
+动态路由的范式注册表与查询接口。
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from .routing_types import ComplexityLevel, CostLevel, TaskType
 
 @dataclass(frozen=True)
 class Paradigm:
-    """Data structure of one routing paradigm."""
+    """单个路由范式（paradigm）的数据结构定义。"""
 
     paradigm_id: str
     name: str
@@ -46,7 +46,7 @@ class Paradigm:
 
 
 class ParadigmPool:
-    """Central registry and query interface for paradigms."""
+    """范式的中心注册表与查询接口。"""
 
     def __init__(self) -> None:
         self._paradigms: Dict[str, Paradigm] = {}
@@ -177,6 +177,6 @@ class ParadigmPool:
 
 if __name__ == "__main__":
     pool = ParadigmPool()
-    print("Registered paradigms:", pool.list_ids())
-    print("Prompt context:")
+    print("已注册的范式：", pool.list_ids())
+    print("Prompt 上下文：")
     print(pool.get_prompt_context(compact=False))

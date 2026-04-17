@@ -8,23 +8,23 @@ class TaskPerceptionBERT:
     def __init__(self, model_name: str = "microsoft/deberta-v3-small", use_lora: bool = True):
         """
         初始化任务感知模型
-        默认使用轻量且在推理分类任务上极强的 DeBERTa-v3-small 英文基座
+        默认使用轻量且在推理分类任务上表现很强的 DeBERTa-v3-small 英文基座
         """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        # 加载用于序列分类的模型，设定 num_labels=2 (0: 单模型/小模型, 1: 多Agent/大模型)
+        # 加载序列分类模型，设定类别数 num_labels=2（0：单模型/小模型；1：多智能体/大模型）
         self.model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
 
         if use_lora:
-            # 引入 LoRA 进行参数高效微调
+            # 引入 LoRA 做参数高效微调
             peft_config = LoraConfig(
                 task_type=TaskType.SEQ_CLS,
                 inference_mode=False,
                 r=16,
                 lora_alpha=32,
                 lora_dropout=0.1,
-                target_modules=["query_proj", "value_proj"]  # 针对注意力机制模块注入
+                target_modules=["query_proj", "value_proj"]  # 针对注意力模块注入
             )
             self.model = get_peft_model(self.model, peft_config)
             print("\nLoRA 可训练参数比例:")
@@ -34,7 +34,7 @@ class TaskPerceptionBERT:
 
     def train_from_local(self, local_data_path: str, output_dir: str = "./task_perception_lora_model"):
         """
-        直接从本地加载合并好的 Dataset，自动划分验证集，并应用动态 Padding 进行微调
+        直接从本地加载合并好的数据集，自动划分验证集，并应用动态填充进行微调
         """
         print(f"\n 正在从本地极速加载数据集: {local_data_path}")
         dataset = load_from_disk(local_data_path)
@@ -46,14 +46,14 @@ class TaskPerceptionBERT:
         print(f"数据集划分完成：训练集 {len(train_dataset)} 条，验证集 {len(eval_dataset)} 条。")
 
         def tokenize_function(examples):
-            # 不使用全局 padding，仅截断，利用 DataCollator 实现 Batch 维度的动态 Padding
+            # 不做全局填充，仅截断；利用 DataCollator 在“批次”维度做动态填充
             return self.tokenizer(examples["text"], truncation=True, max_length=256)
 
         print("\n 正在进行 Tokenize...")
         tokenized_train = train_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
         tokenized_eval = eval_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
-        # 动态 Padding 收集器，大幅降低无效显存占用和计算量
+        # 动态填充收集器：减少无效填充带来的显存与计算浪费
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
         print("\n配置训练参数并启动微调...")
@@ -64,9 +64,9 @@ class TaskPerceptionBERT:
             per_device_eval_batch_size=64,
             num_train_epochs=3,
             weight_decay=0.01,
-            eval_strategy="epoch",  # 每个 epoch 结束验证一次
+            eval_strategy="epoch",  # 每个 epoch 结束后验证一次
             save_strategy="epoch",
-            load_best_model_at_end=True,  # 训练结束后恢复最优验证集 Loss 的权重
+            load_best_model_at_end=True,  # 训练结束后加载验证集 loss 最优的权重
             metric_for_best_model="loss",
             logging_steps=50,
             bf16=torch.cuda.is_bf16_supported(),
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     perception_module = TaskPerceptionBERT()
     perception_module.train_from_local(local_data_path="../Dataset/bert_train_data")
 
-    # 3. 模拟接收系统的 Query 进行路由判定
+    # 3. 模拟接收系统的 query，进行路由判定
     test_query_easy = "Question: The sun rises in which direction?\nChoices: East, West, North, South"
     test_query_hard = "Question: Weng earns $12 an hour for babysitting. Yesterday, she just did 50 minutes of babysitting. How much did she earn?"
 

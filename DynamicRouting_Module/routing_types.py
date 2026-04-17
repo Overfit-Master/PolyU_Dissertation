@@ -1,5 +1,5 @@
 """
-Shared types used by dynamic routing modules.
+动态路由模块共享的类型定义。
 """
 
 from __future__ import annotations

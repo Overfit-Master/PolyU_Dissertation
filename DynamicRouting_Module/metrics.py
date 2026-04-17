@@ -1,5 +1,5 @@
 """
-Simple metrics recorder for routing experiments.
+动态路由实验的简单指标记录器。
 """
 
 from __future__ import annotations

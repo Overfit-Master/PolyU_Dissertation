@@ -1,5 +1,5 @@
 """
-Quality assessment and escalation policy.
+质量评估与升级（escalation）策略。
 """
 
 from __future__ import annotations

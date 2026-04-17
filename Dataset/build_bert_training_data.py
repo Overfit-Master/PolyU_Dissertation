@@ -1,13 +1,14 @@
 """
-基于选用的 benchmark 构建 bert 的训练数据
-CommensenseQA: https://huggingface.co/datasets/commonsense_qa
-Big Benchmark Hard: https://huggingface.co/datasets/lukaemon/bbh
-GSM8K: https://huggingface.co/datasets/openai/gsm8k
+基于选用的基准数据集构建任务感知模型（BERT/DeBERTa 等）的训练数据。
+
+数据集来源：
+- CommonsenseQA: https://huggingface.co/datasets/commonsense_qa
+- BBH (Big-Bench Hard): https://huggingface.co/datasets/lukaemon/bbh
+- GSM8K: https://huggingface.co/datasets/openai/gsm8k
 """
 
 import os
 import random
-import json
 from datasets import load_dataset, get_dataset_config_names, Dataset
 
 
@@ -19,13 +20,13 @@ def build_mixed_perception_dataset(
         output_dir="./bert_train_data"
 ):
     """
-    构建用于训练任务感知模块的混合数据集，包含 CommonsenseQA, GSM8K 和所有 BBH 子类。
+    构建用于训练任务感知模块的混合数据集，包含 CommonsenseQA、GSM8K 以及所有 BBH 子类。
     """
     print("========构建混合数据集========")
 
     # 确保缓存目录存在，避免每次都从头下载
     os.makedirs(cache_dir, exist_ok=True)
-    # 处理 CommonsenseQA (Label 0: 简单任务)
+    # 处理 CommonsenseQA（标签 0：简单任务）
 
     print("\n========[1/3] 正在处理 CommonsenseQA (Label 0)========")
     cqa = load_dataset("commonsense_qa", split="train", cache_dir=cache_dir)
@@ -39,7 +40,7 @@ def build_mixed_perception_dataset(
     data_0 = [{"text": text, "label": 0} for text in cqa_sampled]
     print(f"成功提取 CommonsenseQA 数据: {len(data_0)} 条")
 
-    # 处理 GSM8K (Label 1: 复杂任务)
+    # 处理 GSM8K（标签 1：复杂任务）
     print("\n========[2/3] 正在处理 GSM8K (Label 1)========")
     gsm8k = load_dataset("openai/gsm8k", "main", split="train", cache_dir=cache_dir)
     gsm8k_texts = [f"Question: {item['question']}" for item in gsm8k]
@@ -49,15 +50,15 @@ def build_mixed_perception_dataset(
     print(f"✅ 成功提取 GSM8K 数据: {len(data_1_gsm8k)} 条")
 
 
-    # 3. 处理 BBH (Label 1: 复杂任务) - 遍历所有子类
+    # 3. 处理 BBH（标签 1：复杂任务）- 遍历所有子类
     print("\n========[3/3] 正在处理 BBH 全子类 (Label 1)========")
-    # 获取 bbh 的所有子集名称 (共 20+ 个)
+    # 获取 BBH 的所有子集名称（共 20+ 个）
     bbh_configs = get_dataset_config_names("lukaemon/bbh")
     bbh_all_texts = []
 
     for config in bbh_configs:
         try:
-            # BBH 通常只有 test split
+            # BBH 通常只有测试划分（test）
             bbh_subset = load_dataset("lukaemon/bbh", config, split="test", cache_dir=cache_dir)
             bbh_all_texts.extend([f"Question: {item['input']}" for item in bbh_subset])
         except Exception as e:
@@ -74,14 +75,14 @@ def build_mixed_perception_dataset(
     final_data_list = data_0 + data_1_gsm8k + data_1_bbh
     random.shuffle(final_data_list)
 
-    # 转换为 Hugging Face 的 Dataset 对象
+    # 转换为 Hugging Face Dataset 对象
     final_dataset = Dataset.from_list(final_data_list)
 
-    # 方式A：保存为 HF 磁盘格式
+    # 方式 A：保存为 Hugging Face 磁盘格式
     final_dataset.save_to_disk(output_dir)
     print(f"数据已存为 HF 格式至: {output_dir}")
 
-    # 方式B：顺便存一份 JSONL 格式，方便人工 review 数据
+    # 方式 B：顺便存一份 JSONL 格式，方便人工审阅数据
     # jsonl_path = f"{output_dir}/human_readable.jsonl"
     # with open(jsonl_path, "w", encoding="utf-8") as f:
     #     for item in final_data_list:
